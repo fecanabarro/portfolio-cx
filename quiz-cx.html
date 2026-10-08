@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quiz de CX: Customer Experience</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#eef2f7; --card:#ffffff; --ink:#14213d; --muted:#5b6b86; --line:#d3dbe8;
+  --accent:#2f4bff; --accent-ink:#ffffff; --ok:#16774f; --ok-bg:#dff3e9; --bad:#b8322a; --bad-bg:#fbe3e1;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1730; --card:#172244; --ink:#eaf0ff; --muted:#9db0d4; --line:#2b3a66;
+    --accent:#7b8fff; --accent-ink:#0f1730; --ok:#5fd09b; --ok-bg:#12382b; --bad:#ff8f86; --bad-bg:#46201d;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1730; --card:#172244; --ink:#eaf0ff; --muted:#9db0d4; --line:#2b3a66;
+  --accent:#7b8fff; --accent-ink:#0f1730; --ok:#5fd09b; --ok-bg:#12382b; --bad:#ff8f86; --bad-bg:#46201d;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5}
+main{max-width:640px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:clamp(1.8rem,6vw,2.6rem);line-height:1.1;margin:8px 0 6px;font-weight:800;letter-spacing:-.02em}
+.sub{color:var(--muted);margin:0 0 24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.bar>i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+.meta{display:flex;justify-content:space-between;color:var(--muted);font-size:.9rem;margin-bottom:18px}
+.q{font-size:1.25rem;font-weight:600;line-height:1.35;margin:0 0 18px}
+.opts{display:grid;gap:10px}
+.opt{font:inherit;color:inherit;text-align:left;background:transparent;border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;transition:border-color .15s,background .15s}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:focus-visible,.btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.opt:disabled{cursor:default}
+.opt.ok{border-color:var(--ok);background:var(--ok-bg)}
+.opt.bad{border-color:var(--bad);background:var(--bad-bg)}
+.fb{margin-top:16px;padding:14px;border-radius:10px;background:var(--bg);border-left:4px solid var(--accent)}
+.fb b{display:block;margin-bottom:4px}
+.btn{font:inherit;font-weight:600;background:var(--accent);color:var(--accent-ink);border:0;border-radius:10px;padding:12px 20px;cursor:pointer;margin-top:18px}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+.score{font-size:3.2rem;font-weight:800;letter-spacing:-.03em;margin:0}
+.rev{margin:18px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.rev li{display:flex;gap:10px;font-size:.95rem;padding:10px 12px;border:1px solid var(--line);border-radius:8px}
+.rev .t{font-weight:700;min-width:1.4em}
+.t.ok{color:var(--ok)} .t.bad{color:var(--bad)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Quiz de CX</h1>
+  <p class="sub">Teste o que você sabe sobre Customer Experience.</p>
+  <div id="app" class="card" aria-live="polite"></div>
+</main>
+<script>
+// ====== EDITE AQUI: suas perguntas ======
+// Cada pergunta: q (enunciado), options (alternativas), answer (índice da correta, começando em 0), explain (explicação)
+const QUESTIONS = [
+  { q:"O que é CX (Customer Experience)?",
+    options:["O setor que atende reclamações","A soma das percepções do cliente em todas as interações com a marca","Apenas a usabilidade do site ou app","O programa de fidelidade da empresa"],
+    answer:1, explain:"CX abrange toda a relação do cliente com a marca, antes, durante e depois da compra, e não só o atendimento ou a interface." },
+  { q:"Como se calcula o NPS (Net Promoter Score)?",
+    options:["Média de todas as notas de 0 a 10","% de promotores (9–10) menos % de detratores (0–6)","% de clientes que compraram novamente","Soma das notas dos promotores"],
+    answer:1, explain:"Os neutros (7–8) não entram na conta. O resultado vai de -100 a +100." },
+  { q:"O CSAT mede principalmente:",
+    options:["A probabilidade de recomendar a marca","O esforço do cliente para resolver um problema","A satisfação com uma interação ou produto específico","O valor financeiro do cliente ao longo do tempo"],
+    answer:2, explain:"O CSAT é pontual: 'Quão satisfeito você ficou com este atendimento?'. Costuma ser aplicado logo após a interação." },
+  { q:"O que o CES (Customer Effort Score) avalia?",
+    options:["Quanto esforço o cliente precisou fazer para resolver sua demanda","Quanto a empresa gastou para atender o cliente","O número de contatos por mês","A velocidade de resposta do chatbot"],
+    answer:0, explain:"Quanto menor o esforço, maior a lealdade. Por isso o CES é muito usado em suporte e processos de autoatendimento." },
+  { q:"Para que serve um mapa da jornada do cliente?",
+    options:["Mostrar a localização das lojas","Listar os concorrentes do mercado","Visualizar etapas, pontos de contato, emoções e dores do cliente","Calcular o ROI das campanhas"],
+    answer:2, explain:"O mapa ajuda a enxergar a experiência do ponto de vista do cliente e a achar onde priorizar melhorias." },
+  { q:"O que são 'momentos da verdade' em CX?",
+    options:["Auditorias internas de qualidade","Interações decisivas que moldam a percepção do cliente sobre a marca","Pesquisas anuais de satisfação","Reuniões de alinhamento entre áreas"],
+    answer:1, explain:"Exemplos: a primeira entrega, a resolução de um problema grave ou o cancelamento. Um bom (ou mau) momento pesa muito na lembrança do cliente." },
+  { q:"VoC (Voice of the Customer) é:",
+    options:["Um canal de atendimento por voz","A coleta e análise sistemática do que os clientes dizem, de várias fontes","Um software de gravação de chamadas","A voz institucional da marca"],
+    answer:1, explain:"O VoC reúne pesquisas, reviews, redes sociais, SAC e outras fontes para transformar feedback em decisões." },
+  { q:"O que significa 'fechar o ciclo' (closing the loop)?",
+    options:["Encerrar o ticket o mais rápido possível","Arquivar as pesquisas respondidas","Voltar ao cliente que deu feedback e informar o que foi feito a partir dele","Cancelar o contrato de clientes insatisfeitos"],
+    answer:2, explain:"Retornar ao cliente mostra que a opinião dele gera ação, o que aumenta a confiança e a taxa de resposta nas próximas pesquisas." }
+];
+// ========================================
+
+const app = document.getElementById('app');
+let order, i, score, log, answered;
+
+function shuffle(a){ const b=a.slice(); for(let k=b.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[b[k],b[j]]=[b[j],b[k]];} return b; }
+
+function start(){
+  order = QUESTIONS.map((q,idx)=>({...q, opts: shuffle(q.options.map((t,n)=>({t, ok:n===q.answer})))}));
+  i = 0; score = 0; log = []; answered = false;
+  render();
+}
+
+function render(){
+  if(i >= order.length) return result();
+  const Q = order[i];
+  const pct = Math.round(i/order.length*100);
+  app.innerHTML = `
+    <div class="bar"><i style="width:${pct}%"></i></div>
+    <div class="meta"><span>Pergunta ${i+1} de ${order.length}</span><span>Acertos: ${score}</span></div>
+    <p class="q"></p>
+    <div class="opts"></div>
+    <div id="fb"></div>`;
+  app.querySelector('.q').textContent = Q.q;
+  const box = app.querySelector('.opts');
+  answered = false;
+  Q.opts.forEach((o,n)=>{
+    const b = document.createElement('button');
+    b.className='opt'; b.textContent=o.t;
+    b.onclick=()=>pick(n,b);
+    box.appendChild(b);
+  });
+}
+
+function pick(n){
+  if(answered) return; answered = true;
+  const Q = order[i], chosen = Q.opts[n];
+  const btns = app.querySelectorAll('.opt');
+  btns.forEach((b,k)=>{ b.disabled=true; if(Q.opts[k].ok) b.classList.add('ok'); });
+  if(!chosen.ok) btns[n].classList.add('bad');
+  if(chosen.ok) score++;
+  log.push({q:Q.q, ok:chosen.ok});
+  const last = i === order.length-1;
+  document.getElementById('fb').innerHTML = `
+    <div class="fb"><b>${chosen.ok?'Correto!':'Não foi dessa vez.'}</b><span></span></div>
+    <button class="btn" id="next">${last?'Ver resultado':'Próxima pergunta'}</button>`;
+  document.querySelector('.fb span').textContent = Q.explain;
+  const nx = document.getElementById('next');
+  nx.onclick=()=>{ i++; render(); };
+  nx.focus();
+}
+
+function result(){
+  const n = order.length, pct = Math.round(score/n*100);
+  const msg = pct>=88 ? "Você domina o assunto." : pct>=60 ? "Bom resultado. Revise os pontos errados abaixo." : "Vale rever os conceitos básicos de CX e tentar de novo.";
+  app.innerHTML = `
+    <div class="bar"><i style="width:100%"></i></div>
+    <p class="score">${score}/${n}</p>
+    <p class="q">${msg}</p>
+    <ul class="rev"></ul>
+    <button class="btn" id="again">Jogar de novo</button>`;
+  const ul = app.querySelector('.rev');
+  log.forEach(l=>{
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="t ${l.ok?'ok':'bad'}">${l.ok?'✓':'✗'}</span><span></span>`;
+    li.lastChild.textContent = l.q;
+    ul.appendChild(li);
+  });
+  document.getElementById('again').onclick = start;
+}
+
+start();
+</script>
+</body>
+</html>
